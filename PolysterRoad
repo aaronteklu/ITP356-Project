@@ -1,0 +1,114 @@
+//SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.0;
+
+/**
+    @dev 4% total
+ */
+interface IPolyesterRoad {
+    event ItemListed(bytes32 id, address seller);
+    event ItemRestocked(bytes32 id, uint256 quantity);
+    event ItemPriceChanged(bytes32 id, uint256 oldPrice, uint256 newPrice);
+    event ItemPurchased(bytes32 id, address buyer, uint256 quantity);
+    event BalanceWithdrawn(address seller);
+
+    /**
+        @notice Toggles the pause status
+        @dev
+            Points: 0.125%
+     */
+    function togglePause() external;
+
+    /**
+        @notice Lists a new item
+        @dev 
+            Points: 0.25%
+            Emits:
+                - ItemListed
+                - ItemRestocked
+                - ItemPriceChanged
+            Should not:
+                - List a duplicate item (based on ID)
+                - Allow a quantity of 0
+                - Run when paused
+     */
+    function list(
+        string calldata name,
+        string calldata imgUrl,
+        string calldata description,
+        uint256 quantity,
+        uint256 price
+    ) external;
+
+    /**
+        @notice Restocks an item
+        @dev 
+            Points: 0.25%
+            Emits:
+                - ItemRestocked
+            Should not:
+                - Restock an item that isn't listed
+                - Allow a quantity of 0
+                - Run when paused
+     */
+    function restock(bytes32 id, uint256 quantity) external;
+
+    /**
+        @notice Sets the price of an item
+        @dev 
+            Points: 0.25%
+            Emits:
+                - ItemPurchased
+            Should not:
+                - Set the price of an item that isn't listed
+                - Run when paused
+     */
+    function setPrice(bytes32 id, uint256 price) external;
+
+    /**
+        @notice Purchases an item
+        @dev 
+            Points: 1.5%
+            Emits:
+                - ItemPriceChanged
+            Should not:
+                - Purchase an item that isn't listed
+                - Purchase more quantity than available
+                - Send the wrong amount of funds
+                - Run when paused
+     */
+    function purchase(bytes32 id, uint256 quantity) external payable;
+
+    /**
+        @notice Withdraws a seller's balance
+        @dev 
+            Points: 1.5%
+            Emits:
+                - BalanceWithdrawn
+            Should not:
+                - Withdraw the wrong amount of ether
+                - Run when paused
+     */
+    function withdraw() external;
+
+    /**
+        @notice Returns a seller's balance
+        @dev
+            Points: 0.125%
+     */
+    function balanceOf(address seller) external view returns (uint256);
+}
+
+abstract contract APolyesterRoad is IPolyesterRoad {
+    /**
+        @notice Calculates item ID with given information
+        @dev DO NOT MODIFY
+     */
+    function getItemId(
+        address seller,
+        string calldata name,
+        string calldata imgUrl,
+        string calldata description
+    ) public pure returns (bytes32) {
+        return keccak256(abi.encode(seller, name, imgUrl, description));
+    }
+}
